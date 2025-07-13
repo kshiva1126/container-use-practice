@@ -1,1 +1,1 @@
-No instructions found. Please look around the filesystem and update me
+Environment with curl and git tools for fetching external content
