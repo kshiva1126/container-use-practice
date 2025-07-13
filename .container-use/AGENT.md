@@ -1,1 +1,0 @@
-This is a container-use practice environment for developing a sample Node.js application. Available tools: node, npm, git, curl. Use 'npm init' to initialize projects, 'npm install' for dependencies, and 'npm run' for scripts. All work is safely contained within this environment.
