@@ -6,8 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "test": "node src/test.js",
-    "danger-demo": "node src/danger-demo.js"
+    "test": "node src/test.js"
   },
   "keywords": ["container-use", "safety", "demo", "nodejs"],
   "author": "Container-use Practice",
