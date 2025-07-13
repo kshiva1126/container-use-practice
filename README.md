@@ -28,6 +28,127 @@ container-useを使用することで：
 - ✅ 危険なコマンドを実行してもコンテナ内のみで完結
 - ✅ 各エージェントが独立した環境で安全に作業可能
 
+## AIエージェント向けルール（CLAUDE.mdに追加される内容）
+
+`curl https://raw.githubusercontent.com/dagger/container-use/main/rules/agent.md >> CLAUDE.md`コマンドで追加される具体的なルール：
+
+### 📋 実際のルール内容
+
+```markdown
+ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
+
+DO NOT install or use the git cli with the environment_run_cmd tool. All environment tools will handle git operations for you. Changing ".git" yourself will compromise the integrity of your environment.
+
+You MUST inform the user how to view your work using `container-use log <env_id>` AND `container-use checkout <env_id>`. Failure to do this will make your work inaccessible to others.
+```
+
+### 🔍 ルールの詳細解説
+
+#### 1. **環境の厳格な使用（最重要）**
+```
+ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS
+```
+- **すべて**のファイル操作、コード編集、シェルコマンドは**例外なく環境内でのみ**実行
+- 「簡単な」「一般的な」リクエストでも必ず環境を使用
+- ホストシステムで直接作業することは絶対禁止
+
+#### 2. **Git CLI使用の禁止**
+```
+DO NOT install or use the git cli with the environment_run_cmd tool
+```
+- Git CLIを直接インストールまたは使用することは禁止
+- すべてのGit操作は環境ツールが自動処理
+- `.git`ディレクトリを手動で変更すると環境の整合性が損なわれる
+
+#### 3. **作業可視性の義務（必須）**
+```
+You MUST inform the user how to view your work using `container-use log <env_id>` AND `container-use checkout <env_id>`
+```
+- 作業完了時に**必ず**以下の2つのコマンドを伝える義務
+  - `container-use log <env_id>` - 作業ログ確認
+  - `container-use checkout <env_id>` - 作業内容の取り込み
+- この情報提供を怠ると、他の人が作業にアクセスできなくなる
+
+### ⚠️ これらのルールの重要性
+
+- **安全性確保**: ホストシステムを危険から保護
+- **作業の追跡**: すべての変更が記録され、監査可能
+- **チーム協調**: 他の開発者が作業内容を確認・継続可能
+- **環境整合性**: Git状態とコンテナ状態の同期維持
+
+## 実際の動作デモンストレーション
+
+このセクションでは、実際のスクリーンショットを使ってcontainer-useの動作を紹介します。
+
+### 1. Claude Codeセッションの開始
+
+![Claude Code Session Start](./images/01-claude-session-start.png)
+
+`claude` コマンドでセッションを開始し、container-useが自動的に利用可能になります。
+
+### 2. 開発タスクの依頼
+
+開発者がAIエージェントに具体的なタスクを依頼します：
+
+```
+sample-project ディレクトリにあるExpress.jsアプリに以下の機能を追加してください：
+
+1. /users エンドポイントでユーザーのCRUD操作
+2. メモリ内でのデータ管理
+3. 入力値のバリデーション
+4. エラーハンドリング
+5. 簡単なテストの追加
+```
+
+### 3. 環境作成とコンテナでの開発
+
+![Environment Creation](./images/02-environment-creation.png)
+
+AIエージェントが自動的にcontainer-use環境を作成し、コンテナ内で開発を開始します。
+
+![Development in Progress](./images/03-development-in-progress.png)
+
+エージェントがコンテナ内でファイルの編集、パッケージのインストール、テストの実行などを行います。
+
+### 4. 環境一覧の確認
+
+![Container Use List Command](./images/04-cu-list-command.png)
+
+`cu list` コマンドで現在の環境一覧を確認できます。
+
+### 5. 作業ログの確認
+
+![Container Use Log Command](./images/05-cu-log-command.png)
+
+`cu log <environment-id>` コマンドでエージェントが実際に実行したコマンド履歴を詳細に確認できます。
+
+### 6. 変更差分の確認
+
+![Container Use Diff Command](./images/06-cu-diff-command.png)
+
+`cu diff <environment-id>` コマンドで具体的にどのファイルがどのように変更されたかを確認できます。
+
+### 7. 作業内容のチェックアウト
+
+![Container Use Checkout Command](./images/07-cu-checkout-command.png)
+
+`cu checkout <environment-id>` コマンドで環境の作業をローカルに取り込み、実際のファイルを確認できます。
+
+### 8. 完成したアプリケーション
+
+![Final Result](./images/08-final-result.png)
+
+AIエージェントによって実装されたアプリケーションが正常に動作している様子です。
+
+### デモで使用したサンプルプロジェクト
+
+このデモンストレーションで使用したサンプルプロジェクトは `sample-project/` ディレクトリにあります：
+
+- **初期状態**: 基本的なExpress.jsサーバー
+- **完成状態**: CRUD API、バリデーション、テスト付きの完全なアプリケーション
+
+詳細は [sample-project/README.md](./sample-project/README.md) を参照してください。
+
 ## 技術的な仕組み
 
 ### MCPサーバーとしての動作
@@ -93,11 +214,18 @@ curl -fsSL https://raw.githubusercontent.com/dagger/container-use/main/install.s
 claude mcp add container-use -- container-use stdio
 ```
 
-2. エージェント用ルールを追加（オプション）：
+2. **エージェント用ルールを追加（強く推奨）**：
 
 ```bash
 curl https://raw.githubusercontent.com/dagger/container-use/main/rules/agent.md >> CLAUDE.md
 ```
+
+**このルール追加により実現される効果**：
+- ✅ AIエージェントが適切にcontainer-use環境を利用
+- ✅ Git操作の安全性確保（直接操作の防止）
+- ✅ 作業の可視性と追跡可能性向上
+- ✅ 環境の整合性維持
+- ✅ チーム開発での作業共有の確実性
 
 ### その他のエージェント設定例
 
