@@ -78,11 +78,39 @@ You MUST inform the user how to view your work using `container-use log <env_id>
 
 ## 🌿 ブランチ管理のベストプラクティス
 
+### **💡 実際に使ってみて分かった課題と対策**
+
+container-useを実際に使用する中で、以下のような課題が明らかになりました：
+
+#### **🚨 課題1: 古いブランチからの作業によるコンフリクト**
+```bash
+# 問題のあるパターン（実体験）
+cu list
+# → old-environment (3日前に作成、古いブランチベース)
+
+cu terminal old-environment
+# → 古いコードベースで新しい機能を開発
+# → マージ時に大量のコンフリクトが発生
+```
+
+**解決策**: **必ず最新の作業ブランチから環境を作成**
+
+#### **📊 課題2: diffが見づらく変更内容の把握が困難**
+```bash
+# cu diffの出力例（実際の体験）
+cu diff environment-id
+# → 大量のファイルが一度に表示
+# → どのファイルが重要な変更なのか判別困難
+# → レビューに時間がかかる
+```
+
+**解決策**: **段階的な確認とcheckoutでの詳細確認**
+
 ### **⚠️ 重要: 最新の作業ブランチからの環境作成を徹底**
 
 container-useで新しい作業を開始する際は、**必ず最新の作業ブランチから環境を作成**してください。古いブランチから作業を開始すると、マージ時に競合や不整合が発生する可能性があります。
 
-#### **❌ 避けるべきパターン**
+#### **❌ 避けるべきパターン（実体験より）**
 ```bash
 # 古い環境でさらに作業を続ける（危険）
 cu terminal old-environment-id  # 古いブランチ状態
@@ -90,9 +118,14 @@ cu terminal old-environment-id  # 古いブランチ状態
 # 新しい作業を依頼
 claude
 > "新機能を追加してください"  # ← 古いブランチベースで作業される
+
+# 結果：
+# - 他の開発者の変更が反映されていない
+# - マージ時に予期しないコンフリクト
+# - 作業のやり直しが必要になる場合も
 ```
 
-#### **✅ 推奨パターン**
+#### **✅ 推奨パターン（実践済み）**
 ```bash
 # 1. 現在の作業があれば完了・マージ
 cu merge current-environment-id
@@ -104,9 +137,14 @@ git pull origin main  # または適切なベースブランチ
 # 3. 新しいセッションで新しい作業を開始
 claude
 > "新機能を追加してください"  # ← 最新のブランチベースで作業される
+
+# 結果：
+# - 常に最新のコードベースで作業
+# - コンフリクトの大幅な削減
+# - スムーズなマージ処理
 ```
 
-### **🔄 安全なワークフロー**
+### **🔄 安全なワークフロー（実践ベース）**
 
 #### **新しい作業を開始する前のチェックリスト**
 - [ ] 進行中の作業が完了している（`cu list`で確認）
@@ -114,16 +152,27 @@ claude
 - [ ] ベースブランチ（main等）が最新（`git pull origin main`）
 - [ ] 新しいClaude Codeセッションで作業開始
 
-#### **マージ前の確認事項**
+#### **マージ前の確認事項（改良版）**
 ```bash
-# 1. 環境の変更内容を確認
+# 1. 環境の変更内容を確認（diffが見づらい場合の対策）
 cu diff <environment-id>
 
-# 2. ベースブランチとの差分を確認
+# 2. より詳細な確認のためcheckout
 cu checkout <environment-id>
+
+# 3. ファイル別に変更を確認
+git status
+git diff --name-only  # 変更されたファイル一覧
+git diff --stat       # 変更の統計情報
+
+# 4. 重要なファイルを個別に確認
+git diff main -- important-file.js
+git diff main -- package.json
+
+# 5. ベースブランチとの差分を確認
 git log main..HEAD --oneline  # 追加されるコミットを確認
 
-# 3. 問題なければマージ
+# 6. 問題なければマージ
 git checkout main  # または適切なターゲットブランチ
 cu merge <environment-id>
 ```
@@ -139,9 +188,27 @@ git branch -d cu-<environment-id>
 # - ブランチの混乱や競合を防止
 ```
 
-### **🚨 トラブル回避のための注意点**
+### **🚨 トラブル回避のための注意点（実体験ベース）**
 
-#### **1. 複数環境の並行作業**
+#### **1. diffの見づらさへの対策**
+```bash
+# cu diffが見づらい場合の段階的確認
+cu checkout <environment-id>
+
+# ファイル別確認
+git diff --name-only main  # 変更ファイル一覧
+git diff main --stat       # ファイル別変更量
+
+# 重要ファイルのみ確認
+git diff main -- src/
+git diff main -- package.json
+git diff main -- README.md
+
+# 新規作成ファイルの確認
+git ls-files --others --exclude-standard
+```
+
+#### **2. 複数環境の並行作業**
 ```bash
 # 複数の環境が存在する場合
 cu list
@@ -158,13 +225,16 @@ cu merge env-2  # 依存する機能を後でマージ
 git branch -d cu-env-2  # マージ後に削除
 ```
 
-#### **2. 競合が発生した場合**
+#### **3. 競合が発生した場合（実際の対処法）**
 ```bash
 # マージで競合が発生した場合
 cu checkout <environment-id>
 
-# 手動で競合を解決
+# 競合ファイルの確認
 git status
+git diff --name-only --diff-filter=U  # 競合ファイル一覧
+
+# 手動で競合を解決
 git add .
 git commit -m "Resolve merge conflicts"
 
@@ -176,7 +246,7 @@ git merge cu-<environment-id>
 git branch -d cu-<environment-id>
 ```
 
-#### **3. ブランチクリーンアップの自動化**
+#### **4. ブランチクリーンアップの自動化**
 ```bash
 # 不要になったcuブランチの一括削除
 git branch | grep "cu-" | xargs git branch -d
@@ -195,23 +265,25 @@ main ─┬─ cu-feature-a (Environment A) ─┐
       └─ cu-new-feature (Environment C) ← 最新のmain状態から作成
 ```
 
-### **🔧 ブランチクリーンアップのメリット**
+### **🔧 ブランチクリーンアップのメリット（実証済み）**
 
 #### **✅ 得られる効果**
 - **常に最新状態**: 新しい作業が必ず最新のブランチから開始
 - **競合の回避**: 古いブランチによるマージ競合を防止
 - **リポジトリの整理**: 不要なブランチによる混乱を排除
 - **作業効率向上**: ブランチ管理の複雑さを軽減
+- **diff確認の効率化**: 変更差分が明確になる
 
-#### **📝 推奨ワークフロー**
+#### **📝 推奨ワークフロー（実践済み）**
 ```bash
 # 1. 作業開始
 claude
 > "新機能を実装してください"
 
 # 2. 作業完了後の確認
-cu diff <env-id>
-cu log <env-id>
+cu diff <env-id>         # 概要確認
+cu checkout <env-id>     # 詳細確認
+git diff --stat main     # 統計的確認
 
 # 3. マージとクリーンアップ
 cu merge <env-id>
@@ -238,6 +310,7 @@ cu-merge-clean environment-id  # マージと削除を一度に実行
 - ✅ 作業履歴の明確化
 - ✅ チーム開発での混乱防止
 - ✅ **常に最新状態からの作業開始**
+- ✅ **diff確認の効率化**
 
 ### **🎯 ブランチ戦略別の考慮事項**
 
