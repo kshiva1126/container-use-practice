@@ -69,13 +69,14 @@ Container-useで作成した環境の変更を確認する際、Difitを使用�
 
 ### 推奨確認フロー
 ```bash
-# 1. Container-use環境をチェックアウト
+# 方法1: 環境をチェックアウトしてから確認
 cu checkout <env-id>
-
-# 2. Difitでdiffを確認
 npx difit HEAD~1  # 直前のコミットとの差分
-# または
 npx difit main    # mainブランチとの差分
+
+# 方法2: Container-useブランチを直接比較（推奨）
+npx difit container-use/<env-id> main
+# 例: npx difit container-use/deciding-crayfish main
 
 # 3. 必要に応じてコメント追加・AI活用
 ```
@@ -110,10 +111,9 @@ claude
 > "新しい機能を実装してください"
 
 # 作業確認
-cu list                    # 環境一覧
-cu log <env-id>           # 作業ログ確認
-cu checkout <env-id>      # 実際の結果を確認
-npx difit main            # Difitで視覚的に確認
+cu list                                    # 環境一覧
+cu log <env-id>                           # 作業ログ確認
+npx difit container-use/<env-id> main     # Difitで視覚的に確認
 
 # 作業統合
 cu merge <env-id>         # mainにマージ
@@ -127,19 +127,18 @@ graph LR
     A[最新main] --> B[Claude作業依頼]
     B --> C[container-use環境作成]
     C --> D[AI作業実行]
-    D --> E[cu checkout で確認]
-    E --> F[Difitで視覚的確認]
-    F --> G{品質OK?}
-    G -->|No| D
-    G -->|Yes| H[cu merge]
-    H --> I[ブランチ削除]
+    D --> E[Difitでブランチ比較]
+    E --> F{品質OK?}
+    F -->|No| D
+    F -->|Yes| G[cu merge]
+    G --> H[ブランチ削除]
 ```
 
 ## 重要な学び
 
 1. **必ず最新ブランチから開始**: 古いブランチからの作業は避ける
 2. **小さな単位で作業**: 大きなタスクは分割して管理
-3. **段階的確認**: `cu diff`だけでなく`cu checkout`で実際に確認
+3. **直接ブランチ比較**: `npx difit container-use/<env-id> main`で効率的に確認
 4. **視覚的確認**: Difitを活用してdiffを読みやすく表示
 5. **適切なクリーンアップ**: マージ後は必ずブランチを削除
 
