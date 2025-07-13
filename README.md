@@ -76,6 +76,116 @@ You MUST inform the user how to view your work using `container-use log <env_id>
 - **チーム協調**: 他の開発者が作業内容を確認・継続可能
 - **環境整合性**: Git状態とコンテナ状態の同期維持
 
+## 🌿 ブランチ管理のベストプラクティス
+
+### **⚠️ 重要: 最新ブランチからの環境作成を徹底**
+
+container-useで新しい作業を開始する際は、**必ず最新のmainブランチから環境を作成**してください。古いブランチから作業を開始すると、マージ時に競合や不整合が発生する可能性があります。
+
+#### **❌ 避けるべきパターン**
+```bash
+# 古い環境でさらに作業を続ける（危険）
+cu terminal old-environment-id  # 古いブランチ状態
+
+# 新しい作業を依頼
+claude
+> "新機能を追加してください"  # ← 古いブランチベースで作業される
+```
+
+#### **✅ 推奨パターン**
+```bash
+# 1. 現在の作業があれば完了・マージ
+cu merge current-environment-id
+
+# 2. mainブランチが最新であることを確認
+git checkout main
+git pull origin main
+
+# 3. 新しいセッションで新しい作業を開始
+claude
+> "新機能を追加してください"  # ← 最新のmainブランチベースで作業される
+```
+
+### **🔄 安全なワークフロー**
+
+#### **新しい作業を開始する前のチェックリスト**
+- [ ] 進行中の作業が完了している（`cu list`で確認）
+- [ ] 完了した作業がマージ済み（`cu merge <env-id>`）
+- [ ] mainブランチが最新（`git pull origin main`）
+- [ ] 新しいClaude Codeセッションで作業開始
+
+#### **マージ前の確認事項**
+```bash
+# 1. 環境の変更内容を確認
+cu diff <environment-id>
+
+# 2. mainブランチとの差分を確認
+cu checkout <environment-id>
+git log main..HEAD --oneline  # 追加されるコミットを確認
+
+# 3. 問題なければマージ
+git checkout main
+cu merge <environment-id>
+```
+
+### **🚨 トラブル回避のための注意点**
+
+#### **1. 複数環境の並行作業**
+```bash
+# 複数の環境が存在する場合
+cu list
+
+# 各環境の状態を確認
+cu log env-1
+cu log env-2
+
+# マージ順序を計画（依存関係を考慮）
+cu merge env-1  # 基盤機能から先にマージ
+cu merge env-2  # 依存する機能を後でマージ
+```
+
+#### **2. 競合が発生した場合**
+```bash
+# マージで競合が発生した場合
+cu checkout <environment-id>
+
+# 手動で競合を解決
+git status
+git add .
+git commit -m "Resolve merge conflicts"
+
+# mainにマージ
+git checkout main
+git merge cu-<environment-id>
+```
+
+#### **3. 古い環境のクリーンアップ**
+```bash
+# 不要になった環境の確認
+cu list
+
+# 古い環境のログを確認（必要に応じて）
+cu log old-environment-id
+
+# 不要な環境は自然に削除される（手動削除は不要）
+```
+
+### **📊 ブランチ管理の可視化**
+
+```
+main ─┬─ cu-feature-a (Environment A) ─┐
+      │                                ├─ merge
+      ├─ cu-feature-b (Environment B) ─┘
+      │
+      └─ cu-new-feature (Environment C) ← 最新のmainから作成
+```
+
+この管理方法により：
+- ✅ 各環境が最新のコードベースで作業
+- ✅ マージ競合の最小化
+- ✅ 作業履歴の明確化
+- ✅ チーム開発での混乱防止
+
 ## 実際の動作デモンストレーション
 
 このセクションでは、実際のスクリーンショットを使ってcontainer-useの動作を紹介します。
