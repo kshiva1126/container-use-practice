@@ -55,21 +55,29 @@ git log --oneline
 
 ## Difit との連携
 
-### 現在の状況
-- Container-useは**MCP (Model Context Protocol)** 経由でClaude Codeと連携
-- DifitもMCP対応を検討中だが、まだ直接的な統合はなし
+### Difitとは
+[Difit](https://github.com/yoshiko-pg/difit) は、Git diffをGitHub風のインターフェースで表示する軽量なコマンドラインツールです。主な特徴：
+- ゼロ設定で`npx difit <commit>`で起動
+- 構文ハイライト付きのdiff表示
+- AI対応のコードレビュー機能（各行にコメント追加可能）
 
-### 期待される連携効果
-1. **安全なコード生成**: Difitが生成したコードをcontainer-use環境で安全にテスト
-2. **継続的検証**: Difitの提案 → container-use環境でテスト → フィードバックループ
-3. **学習データ**: Container-use環境での実行結果をDifitの学習に活用
+### 連携のメリット
+Container-useで作成した環境の変更を確認する際、Difitを使用することで：
+- **視覚的な確認**: `cu diff`の出力よりも読みやすいGitHub風インターフェース
+- **AIレビュー**: diffの各行にコメントを追加し、AIプロンプトとして活用
+- **効率的な確認**: ブラウザでの直感的な操作
 
-### 現在可能な連携方法
+### 推奨確認フロー
 ```bash
-# 1. Difitでコード案を生成
-# 2. Container-use環境でClaude Codeがそのコードを実装・テスト
-claude
-> "Difitが提案したXXXの機能を実装してテストしてください"
+# 1. Container-use環境をチェックアウト
+cu checkout <env-id>
+
+# 2. Difitでdiffを確認
+npx difit HEAD~1  # 直前のコミットとの差分
+# または
+npx difit main    # mainブランチとの差分
+
+# 3. 必要に応じてコメント追加・AI活用
 ```
 
 ## クイックスタート
@@ -105,6 +113,7 @@ claude
 cu list                    # 環境一覧
 cu log <env-id>           # 作業ログ確認
 cu checkout <env-id>      # 実際の結果を確認
+npx difit main            # Difitで視覚的に確認
 
 # 作業統合
 cu merge <env-id>         # mainにマージ
@@ -119,10 +128,11 @@ graph LR
     B --> C[container-use環境作成]
     C --> D[AI作業実行]
     D --> E[cu checkout で確認]
-    E --> F{品質OK?}
-    F -->|No| D
-    F -->|Yes| G[cu merge]
-    G --> H[ブランチ削除]
+    E --> F[Difitで視覚的確認]
+    F --> G{品質OK?}
+    G -->|No| D
+    G -->|Yes| H[cu merge]
+    H --> I[ブランチ削除]
 ```
 
 ## 重要な学び
@@ -130,11 +140,13 @@ graph LR
 1. **必ず最新ブランチから開始**: 古いブランチからの作業は避ける
 2. **小さな単位で作業**: 大きなタスクは分割して管理
 3. **段階的確認**: `cu diff`だけでなく`cu checkout`で実際に確認
-4. **適切なクリーンアップ**: マージ後は必ずブランチを削除
+4. **視覚的確認**: Difitを活用してdiffを読みやすく表示
+5. **適切なクリーンアップ**: マージ後は必ずブランチを削除
 
 ## 参考リンク
 
 - [Container-Use GitHub](https://github.com/dagger/container-use)
+- [Difit GitHub](https://github.com/yoshiko-pg/difit)
 - [公式ドキュメント](https://container-use.com/quickstart)
 - [Dagger Discord](https://discord.gg/dagger-io) (#container-useチャンネル)
 - [Model Context Protocol](https://modelcontextprotocol.io/)
