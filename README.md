@@ -1,110 +1,144 @@
-# Container Use Practice
+# Container-Use 実践ガイド
 
-🚀 [Dagger container-use](https://github.com/dagger/container-use)を使用したAIエージェント開発環境の実践サンプルプロジェクトです。
+AIエージェント（Claude Code）と安全に作業するためのコンテナ環境ツール [container-use](https://github.com/dagger/container-use) の実践レポートです。
 
-## 📋 目次
-- [概要](#概要)
-- [クイックスタート](#クイックスタート)
-- [ドキュメント](#ドキュメント)
-- [参考リンク](#参考リンク)
+## Container-Use とは
 
-## 🚀 概要
+Container-useは、AIエージェントが**独立したコンテナ内で安全に作業**できる環境を提供するツールです。
 
-container-useは、AIエージェント（Claude Code、Cursorなど）が**安全かつ独立**して作業できるコンテナ環境を提供するツールです。
+### 核心的な価値
+- **🔒 安全性**: ホストシステムを保護しながらAIに自由な作業環境を提供
+- **👀 可視性**: AIの全作業履歴をリアルタイムで追跡可能
+- **🌿 Git統合**: 標準的なGitワークフローで作業を管理
 
-### 主な特徴
-- 🔒 **分離された環境**: 各エージェントが独自のコンテナで安全に作業
-- 👀 **リアルタイム追跡**: エージェントの完全な作業履歴を監視
-- 🎮 **標準Git管理**: 通常のGitワークフローで作業を管理
-- 🌎 **汎用性**: あらゆるMCP互換エージェントと連携可能
+### 基本的な仕組み
+```
+AIエージェント → Container-Use → 独立コンテナ → Git Worktree → マージ
+```
 
-### 安全性のメリット
-従来の危険性 → container-useによる解決
-- ❌ システム破壊の危険 → ✅ コンテナ内で完全分離
-- ❌ 重要ファイルの誤削除 → ✅ ホストシステムは保護
-- ❌ 複数エージェントの干渉 → ✅ 独立した環境で並行作業
+## 実際に使ってわかった課題
 
-## ⚡ クイックスタート
+### 1. ブランチ管理の重要性
+**❌ 問題**: 古いブランチから環境を作成 → 大量のマージコンフリクト
+```bash
+# 危険な例
+git checkout old-feature-branch
+claude  # ここで環境作成すると古い状態ベース
+```
+
+**✅ 解決策**: 必ず最新のmainブランチから作業開始
+```bash
+git checkout main
+git pull origin main
+claude  # 最新状態から環境作成
+```
+
+### 2. 作業確認の難しさ
+**❌ 問題**: `cu diff`の出力が大きすぎて確認困難
+
+**✅ 解決策**: 段階的な確認フロー
+```bash
+# 1. 概要確認
+cu list
+
+# 2. 詳細確認（実際にチェックアウト）
+cu checkout <env-id>
+
+# 3. 通常のGitコマンドで詳細確認
+git status
+git diff
+git log --oneline
+```
+
+### 3. 環境の使い分け
+**学習**: 一つの大きなタスクより、小さなタスクごとに環境を分ける方が管理しやすい
+
+## Difit との連携
+
+### 現在の状況
+- Container-useは**MCP (Model Context Protocol)** 経由でClaude Codeと連携
+- DifitもMCP対応を検討中だが、まだ直接的な統合はなし
+
+### 期待される連携効果
+1. **安全なコード生成**: Difitが生成したコードをcontainer-use環境で安全にテスト
+2. **継続的検証**: Difitの提案 → container-use環境でテスト → フィードバックループ
+3. **学習データ**: Container-use環境での実行結果をDifitの学習に活用
+
+### 現在可能な連携方法
+```bash
+# 1. Difitでコード案を生成
+# 2. Container-use環境でClaude Codeがそのコードを実装・テスト
+claude
+> "Difitが提案したXXXの機能を実装してテストしてください"
+```
+
+## クイックスタート
 
 ### 1. インストール
 ```bash
 # macOS
 brew install dagger/tap/container-use
 
-# その他のプラットフォーム
+# Linux/その他
 curl -fsSL https://raw.githubusercontent.com/dagger/container-use/main/install.sh | bash
 ```
 
 ### 2. Claude Codeとの連携
 ```bash
-# MCPサーバーとして追加
+# MCPサーバー追加
 claude mcp add container-use -- container-use stdio
 
-# エージェント用ルールを追加（推奨）
+# プロジェクトルール追加（推奨）
 curl https://raw.githubusercontent.com/dagger/container-use/main/rules/agent.md >> CLAUDE.md
 ```
 
-### 3. 基本的な使用方法
+### 3. 基本的な使い方
 ```bash
+# 最新ブランチに移動
+git checkout main && git pull
+
 # Claude Codeセッション開始
 claude
-> "Node.jsプロジェクトを作成してください"
+> "新しい機能を実装してください"
 
 # 作業確認
 cu list                    # 環境一覧
-cu log <environment-id>    # 作業ログ
-cu diff <environment-id>   # 変更差分
+cu log <env-id>           # 作業ログ確認
+cu checkout <env-id>      # 実際の結果を確認
 
 # 作業統合
-cu merge <environment-id>          # マージ
-git branch -d cu-<environment-id>  # クリーンアップ
+cu merge <env-id>         # mainにマージ
+git branch -d cu-<env-id> # ブランチクリーンアップ
 ```
 
-> 💡 **重要**: 新しい作業は必ず最新ブランチから開始し、マージ後はブランチを削除してください
+## 推奨ワークフロー
 
-## 📚 ドキュメント
-
-| ドキュメント | 内容 |
-|-------------|------|
-| [📖 詳細セットアップ](docs/setup.md) | インストール詳細、各種エージェント設定 |
-| [🤖 AIエージェント向けルール](docs/agent-rules.md) | CLAUDE.mdルール、ベストプラクティス |
-| [🌿 ブランチ管理](docs/branch-management.md) | 実体験ベースの課題と対策、ワークフロー |
-| [💻 コマンドリファレンス](docs/commands.md) | 全コマンド詳細、使用例 |
-| [🛠️ トラブルシューティング](docs/troubleshooting.md) | よくある問題と解決方法 |
-| [⚙️ 技術仕様](docs/technical.md) | MCP、Git Worktree、Dockerの詳細 |
-
-## 🔄 基本ワークフロー
-
-```
-🚀 セッション開始 → 🤖 作業依頼 → 👀 確認 → ✅ マージ → 🧹 クリーンアップ
+```mermaid
+graph LR
+    A[最新main] --> B[Claude作業依頼]
+    B --> C[container-use環境作成]
+    C --> D[AI作業実行]
+    D --> E[cu checkout で確認]
+    E --> F{品質OK?}
+    F -->|No| D
+    F -->|Yes| G[cu merge]
+    G --> H[ブランチ削除]
 ```
 
-## 📊 実際の使用体験から
+## 重要な学び
 
-> ⚠️ **課題**: 古いブランチからの作業 → 大量のコンフリクト発生  
-> ✅ **解決**: 必ず最新ブランチから環境作成
+1. **必ず最新ブランチから開始**: 古いブランチからの作業は避ける
+2. **小さな単位で作業**: 大きなタスクは分割して管理
+3. **段階的確認**: `cu diff`だけでなく`cu checkout`で実際に確認
+4. **適切なクリーンアップ**: マージ後は必ずブランチを削除
 
-> ⚠️ **課題**: `cu diff`の出力が見づらい  
-> ✅ **解決**: `cu checkout`後に段階的に確認
+## 参考リンク
 
-詳細は [ブランチ管理ベストプラクティス](docs/branch-management.md) を参照
-
-## 🔗 参考リンク
-
-- [Dagger container-use GitHub](https://github.com/dagger/container-use)
+- [Container-Use GitHub](https://github.com/dagger/container-use)
 - [公式ドキュメント](https://container-use.com/quickstart)
-- [Discord コミュニティ](https://discord.gg/dagger-io)
-- [Dagger 公式サイト](https://dagger.io/)
-- [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
+- [Dagger Discord](https://discord.gg/dagger-io) (#container-useチャンネル)
+- [Model Context Protocol](https://modelcontextprotocol.io/)
 
 ---
 
-## 🚨 重要な注意事項
-
-- container-useは現在**実験的な段階**にあり、仕様が変更される可能性があります
-- プロダクション環境での使用前に十分なテストを行ってください
-- サポートが必要な場合は[Discord](https://discord.gg/dagger-io)の#container-useチャンネルをご利用ください
-
-## 📄 ライセンス
-
-このサンプルプロジェクトは学習・実践用途のものです。
+> **注意**: Container-useは現在実験的段階にあります。プロダクション使用前に十分なテストを行ってください。
