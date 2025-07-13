@@ -70,7 +70,6 @@ git branch -d cu-<environment-id>  # クリーンアップ
 | [🤖 AIエージェント向けルール](docs/agent-rules.md) | CLAUDE.mdルール、ベストプラクティス |
 | [🌿 ブランチ管理](docs/branch-management.md) | 実体験ベースの課題と対策、ワークフロー |
 | [💻 コマンドリファレンス](docs/commands.md) | 全コマンド詳細、使用例 |
-| [🎬 実際の動作デモ](docs/demo.md) | スクリーンショット付きデモンストレーション |
 | [🛠️ トラブルシューティング](docs/troubleshooting.md) | よくある問題と解決方法 |
 | [⚙️ 技術仕様](docs/technical.md) | MCP、Git Worktree、Dockerの詳細 |
 
