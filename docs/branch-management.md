@@ -96,7 +96,7 @@ npx difit container-use/<environment-id> main
 # 例：literate-bulldog環境の確認
 npx difit container-use/literate-bulldog main
 
-# 複数環境の監視
+# 複数環境のスナップショット確認
 cu list
 npx difit container-use/env-1 main
 npx difit container-use/env-2 main
@@ -107,9 +107,14 @@ npx difit container-use/env-1 container-use/env-2
 
 **メリット**：
 - ✅ 現在の作業を中断しない
-- ✅ リアルタイムでエージェントの作業を監視可能
+- ✅ その時点での環境の状態を確認可能
 - ✅ 複数環境の比較が簡単
 - ✅ GitHub風UIで見やすい表示
+
+**注意事項**：
+- ⚠️ リアルタイム更新はされない（スナップショット確認）
+- ⚠️ ブラウザ更新で通信が切断される
+- ⚠️ 確認の度に開発サーバーを起動し直す必要がある
 
 ##### **従来の方法（checkoutが必要）**
 ```bash
@@ -149,7 +154,7 @@ git diff main | bat --language diff
 
 #### 段階的確認プロセス（非破壊的方法推奨）
 ```bash
-# Phase 1: 非破壊的な概要確認（推奨）
+# Phase 1: 非破壊的なスナップショット確認（推奨）
 npx difit container-use/<environment-id> main
 
 # Phase 2: 詳細確認（必要に応じてcheckout）
@@ -188,13 +193,13 @@ git branch -d cu-<environment-id>
 
 ### 1. diffの見づらさへの対策
 
-#### リアルタイム監視方法
+#### スナップショット確認方法
 ```bash
-# エージェント作業中のリアルタイム確認
+# エージェント作業完了後の確認
 cu list  # 現在の環境確認
-npx difit container-use/<environment-id> main  # 非破壊的確認
+npx difit container-use/<environment-id> main  # その時点での状態確認
 
-# 複数環境の同時監視
+# 複数環境の状態比較
 npx difit container-use/frontend-work main
 npx difit container-use/backend-work main
 npx difit container-use/frontend-work container-use/backend-work
@@ -203,11 +208,11 @@ npx difit container-use/frontend-work container-use/backend-work
 #### エイリアス設定で効率化
 ```bash
 # ~/.bashrc または ~/.zshrc に追加
-alias cu-watch='npx difit container-use/$1 main'
+alias cu-check='npx difit container-use/$1 main'
 alias cu-compare='npx difit container-use/$1 container-use/$2'
 
 # 使用例
-cu-watch literate-bulldog
+cu-check literate-bulldog
 cu-compare env-1 env-2
 ```
 
@@ -241,7 +246,7 @@ git ls-files --others --exclude-standard
 # 複数の環境が存在する場合
 cu list
 
-# 各環境の状態を非破壊的に確認
+# 各環境の状態を確認
 npx difit container-use/env-1 main
 npx difit container-use/env-2 main
 npx difit container-use/env-1 container-use/env-2  # 環境間の差分
@@ -348,14 +353,14 @@ main ─┬─ cu-feature-a ─┐
       └─ cu-new-feature ← 最新のmain状態から作成
 
 remotes/container-use/
-├── literate-bulldog    # 非破壊的確認可能
+├── literate-bulldog    # スナップショット確認可能
 ├── feature-work        # npx difit container-use/feature-work main
 └── bugfix-work         # npx difit container-use/bugfix-work main
 ```
 
 ## 🎯 推奨ワークフロー（実践済み）
 
-### 日常的なワークフロー（非破壊的監視）
+### 日常的なワークフロー（非破壊的確認）
 ```bash
 # 1. 作業開始前の準備
 git checkout main
@@ -366,11 +371,11 @@ cu list  # 既存環境確認
 claude
 > "新機能を実装してください"
 
-# 3. 作業進捗の監視（非破壊的）
-npx difit container-use/<env-id> main  # リアルタイム確認
+# 3. 作業完了後の確認（スナップショット）
+npx difit container-use/<env-id> main  # その時点での状態確認
 
-# 4. 作業完了後の最終確認
-cu checkout <env-id>  # 必要に応じて
+# 4. 詳細確認（必要に応じて）
+cu checkout <env-id>
 npx difit HEAD main   # 最終チェック
 
 # 5. マージとクリーンアップ
@@ -382,12 +387,12 @@ claude
 > "次の機能を実装してください"  # 最新のmainから開始
 ```
 
-### 複数環境監視のワークフロー
+### 複数環境確認のワークフロー
 ```bash
 # 1. 複数環境の同時作業
 cu list
 
-# 2. 各環境の進捗確認（非破壊的）
+# 2. 各環境の状態確認（スナップショット）
 npx difit container-use/frontend-work main
 npx difit container-use/backend-work main
 npx difit container-use/frontend-work container-use/backend-work
@@ -402,5 +407,5 @@ npx difit container-use/frontend-work container-use/backend-work
 - ✅ 作業履歴の明確化
 - ✅ チーム開発での混乱防止
 - ✅ **常に最新状態からの作業開始**
-- ✅ **非破壊的なリアルタイム監視**
+- ✅ **非破壊的なスナップショット確認**
 - ✅ **GitHub風UIでの効率的なdiff確認**
