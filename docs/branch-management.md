@@ -86,6 +86,46 @@ git diff main -- package.json
 git ls-files --others --exclude-standard
 ```
 
+#### 🎨 **diff表示の改善ツール（実証済み）**
+
+##### **difitを使用した見やすいdiff**
+```bash
+# GitHub風UIでdiff確認（推奨）
+cu checkout <environment-id>
+npx difit HEAD main
+
+# 現在の作業内容確認
+npx difit
+npx difit .
+
+# Node.js 21.0.0+が必要
+node --version
+```
+
+##### **container-useでの推奨ワークフロー**
+```bash
+# 1. 環境の作業をローカルに取り込み
+cu checkout <environment-id>
+
+# 2. GitHub風UIで変更確認
+npx difit HEAD main
+
+# 3. ブラウザで詳細レビュー
+# (自動でブラウザが開いて見やすい形式で表示される)
+```
+
+##### **その他の改善ツール**
+```bash
+# delta（Rust製、高速）
+git diff main | delta
+
+# diff-so-fancy（カラフル表示）
+git diff main | diff-so-fancy
+
+# bat（シンタックスハイライト）
+git diff main | bat --language diff
+```
+
 ## 🔄 安全なワークフロー
 
 ### 新しい作業を開始する前のチェックリスト
@@ -96,22 +136,22 @@ git ls-files --others --exclude-standard
 
 ### マージ前の確認事項（改良版）
 
-#### 段階的確認プロセス
+#### 段階的確認プロセス（difit使用）
 ```bash
 # Phase 1: 概要確認
 cu diff <environment-id>
 
-# Phase 2: 詳細確認
+# Phase 2: GitHub風UIで詳細確認（推奨）
 cu checkout <environment-id>
+npx difit HEAD main
 
-# Phase 3: 統計的確認
+# Phase 3: 統計的確認（必要に応じて）
 git diff --stat main
 git log main..HEAD --oneline
 
-# Phase 4: 重要ファイルの個別確認
+# Phase 4: 重要ファイルの個別確認（必要に応じて）
 git diff main -- src/
 git diff main -- package.json
-git diff main -- README.md
 
 # Phase 5: テスト実行（必要に応じて）
 npm test
@@ -158,6 +198,16 @@ git diff main -- *.md
 
 # ステップ4: 新規ファイル確認
 git ls-files --others --exclude-standard
+```
+
+#### difit使用時の最適化
+```bash
+# エイリアス設定で効率化
+alias cu-diff-ui='cu checkout $1 && npx difit HEAD main'
+alias git-diff-ui='npx difit HEAD main'
+
+# 使用例
+cu-diff-ui environment-id
 ```
 
 ### 2. 複数環境の並行作業
@@ -272,7 +322,7 @@ main ─┬─ cu-feature-a ─┐
 
 ## 🎯 推奨ワークフロー（実践済み）
 
-### 日常的なワークフロー
+### 日常的なワークフロー（difit活用）
 ```bash
 # 1. 作業開始前の準備
 git checkout main
@@ -283,10 +333,9 @@ cu list  # 既存環境確認
 claude
 > "新機能を実装してください"
 
-# 3. 作業完了後の確認
-cu diff <env-id>         # 概要確認
-cu checkout <env-id>     # 詳細確認
-git diff --stat main     # 統計的確認
+# 3. 作業完了後の確認（difit使用）
+cu checkout <env-id>
+npx difit HEAD main      # GitHub風UIで概要確認
 
 # 4. マージとクリーンアップ
 cu merge <env-id>
@@ -303,4 +352,4 @@ claude
 - ✅ 作業履歴の明確化
 - ✅ チーム開発での混乱防止
 - ✅ **常に最新状態からの作業開始**
-- ✅ **diff確認の効率化**
+- ✅ **GitHub風UIでの効率的なdiff確認**
