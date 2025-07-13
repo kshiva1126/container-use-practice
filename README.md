@@ -16,38 +16,23 @@ Container-useは、AIエージェントが**独立したコンテナ内で安全
 AIエージェント → Container-Use → 独立コンテナ → Git Worktree → マージ
 ```
 
-## 実際に使ってわかった課題
+## 実際に使ってわかった課題と解決策
 
 ### 1. ブランチ管理の重要性
 **❌ 問題**: 古いブランチから環境を作成 → 大量のマージコンフリクト
-```bash
-# 危険な例
-git checkout old-feature-branch
-claude  # ここで環境作成すると古い状態ベース
-```
 
 **✅ 解決策**: 必ず最新のmainブランチから作業開始
 ```bash
-git checkout main
-git pull origin main
+git checkout main && git pull origin main
 claude  # 最新状態から環境作成
 ```
 
 ### 2. 作業確認の難しさ
 **❌ 問題**: `cu diff`の出力が大きすぎて確認困難
 
-**✅ 解決策**: 段階的な確認フロー
+**✅ 解決策**: Difitによる視覚的な確認
 ```bash
-# 1. 概要確認
-cu list
-
-# 2. 詳細確認（実際にチェックアウト）
-cu checkout <env-id>
-
-# 3. 通常のGitコマンドで詳細確認
-git status
-git diff
-git log --oneline
+npx difit container-use/<env-id> main
 ```
 
 ### 3. 環境の使い分け
@@ -56,29 +41,18 @@ git log --oneline
 ## Difit との連携
 
 ### Difitとは
-[Difit](https://github.com/yoshiko-pg/difit) は、Git diffをGitHub風のインターフェースで表示する軽量なコマンドラインツールです。主な特徴：
-- ゼロ設定で`npx difit <commit>`で起動
-- 構文ハイライト付きのdiff表示
-- AI対応のコードレビュー機能（各行にコメント追加可能）
+[Difit](https://github.com/yoshiko-pg/difit) は、Git diffをGitHub風のインターフェースで表示する軽量なコマンドラインツールです。
 
 ### 連携のメリット
-Container-useで作成した環境の変更を確認する際、Difitを使用することで：
-- **視覚的な確認**: `cu diff`の出力よりも読みやすいGitHub風インターフェース
-- **AIレビュー**: diffの各行にコメントを追加し、AIプロンプトとして活用
+- **視覚的な確認**: `cu diff`より読みやすいGitHub風インターフェース
+- **AIレビュー**: diffの各行にコメント追加、AIプロンプトとして活用
 - **効率的な確認**: ブラウザでの直感的な操作
 
-### 推奨確認フロー
+### 推奨確認方法
 ```bash
-# 方法1: 環境をチェックアウトしてから確認
-cu checkout <env-id>
-npx difit HEAD~1  # 直前のコミットとの差分
-npx difit main    # mainブランチとの差分
-
-# 方法2: Container-useブランチを直接比較（推奨）
+# Container-useブランチを直接比較
 npx difit container-use/<env-id> main
 # 例: npx difit container-use/deciding-crayfish main
-
-# 3. 必要に応じてコメント追加・AI活用
 ```
 
 ## クイックスタート
@@ -138,9 +112,8 @@ graph LR
 
 1. **必ず最新ブランチから開始**: 古いブランチからの作業は避ける
 2. **小さな単位で作業**: 大きなタスクは分割して管理
-3. **直接ブランチ比較**: `npx difit container-use/<env-id> main`で効率的に確認
-4. **視覚的確認**: Difitを活用してdiffを読みやすく表示
-5. **適切なクリーンアップ**: マージ後は必ずブランチを削除
+3. **Difitで効率確認**: `npx difit container-use/<env-id> main`で視覚的に確認
+4. **適切なクリーンアップ**: マージ後は必ずブランチを削除
 
 ## 参考リンク
 
@@ -148,7 +121,6 @@ graph LR
 - [Difit GitHub](https://github.com/yoshiko-pg/difit)
 - [公式ドキュメント](https://container-use.com/quickstart)
 - [Dagger Discord](https://discord.gg/dagger-io) (#container-useチャンネル)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
 
 ---
 
