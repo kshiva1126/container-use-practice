@@ -91,7 +91,7 @@ npx difit container-use/<env-id> main     # Difitで視覚的に確認
 
 # 作業統合
 cu merge <env-id>         # mainにマージ
-git branch -d cu-<env-id> # ブランチクリーンアップ
+cu delete <env-id>        # 環境とブランチのクリーンアップ
 ```
 
 ## 推奨ワークフロー
@@ -105,7 +105,7 @@ graph LR
     E --> F{品質OK?}
     F -->|No| D
     F -->|Yes| G[cu merge]
-    G --> H[ブランチ削除]
+    G --> H[cu delete]
 ```
 
 ## 重要な学び
@@ -113,7 +113,7 @@ graph LR
 1. **必ず最新の作業ブランチから開始**: 古いブランチからの作業は避ける
 2. **小さな単位で作業**: 大きなタスクは分割して管理
 3. **Difitで効率確認**: `npx difit container-use/<env-id> main`で視覚的に確認
-4. **適切なクリーンアップ**: マージ後は必ずブランチを削除
+4. **適切なクリーンアップ**: マージ後は必ず`cu delete`で環境を削除
 
 ## 参考リンク
 
