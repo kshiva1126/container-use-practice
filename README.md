@@ -57,9 +57,31 @@ npx difit container-use/<env-id> main
 
 ## クイックスタート
 
-### 1. インストール
+### 0. 事前準備（必須）
+
+Container-useを使用する前に、以下のツールがインストールされている必要があります：
+
+#### **必須依存関係**
+- **Docker Engine** - コンテナ実行環境として必要
+- **Git** - worktreeとブランチ管理で使用
+
+#### **対応OS**
+- ✅ Linux（任意のディストリビューション）
+- ✅ macOS
+- ❌ Windows（未対応）
+
+#### **インストール確認**
 ```bash
-# macOS
+# Docker が動作しているか確認
+docker --version && docker ps
+
+# Git が利用可能か確認
+git --version
+```
+
+### 1. Container-use インストール
+```bash
+# macOS（推奨）
 brew install dagger/tap/container-use
 
 # Linux/その他
